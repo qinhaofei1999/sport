@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import video, pose
+from app.routers import video, pose, gait
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,7 +14,7 @@ logging.basicConfig(
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
-    description="Swimming pose estimation API using MediaPipe BlazePose",
+    description="Sport pose estimation API using MediaPipe BlazePose (swimming + running gait)",
 )
 
 app.add_middleware(
@@ -27,6 +27,7 @@ app.add_middleware(
 
 app.include_router(video.router)
 app.include_router(pose.router)
+app.include_router(gait.router)
 
 
 @app.get("/health")
