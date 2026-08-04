@@ -1,93 +1,122 @@
-# Sport
+# SportPose
 
+AI 运动姿态分析 App（Flutter）
 
+## 环境要求
 
-## Getting started
+- Flutter 3.x
+- Android Studio（含 Android SDK）
+- 可选：Visual Studio（用于 Windows 桌面端）
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## 快速开始（Android 模拟器）
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### 1. 启动模拟器
 
-## Add your files
+```powershell
+# 查看已有 AVD 列表
+flutter emulators
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+# 启动模拟器（如果还没有 AVD，先创建）
+flutter emulators --launch flutter_emulator
+
+# 如果没有 AVD，手动创建
+flutter emulators --create flutter_emulator
+
+# 或者直接用 Android Studio 创建：
+# Tools → Device Manager → Create device
+```
+
+### 2. 运行 App
+
+```powershell
+cd sport_app
+
+# 确保模拟器已启动并连接
+flutter devices
+
+# 运行 App（会自动选择模拟器）
+flutter run
+
+# 如果多个设备，指定设备 ID
+flutter run --device-id emulator-5554
+```
+
+### 3. 首次启动说明
+
+- 首次运行需下载 Gradle 依赖，耗时 3~10 分钟
+- App 启动后会请求**摄像头权限**，请允许
+- 模拟器默认提供虚拟摄像头场景，可直接体验
+
+## 构建 iOS（云端编译，无需 Mac）
+
+通过 **Codemagic** 云平台编译 iOS App，构建成功后自动上传到 **TestFlight**，即可下载到 iPhone。
+
+### 前置条件
+
+- Apple Developer 付费账号（$99/年）
+- 代码已推送到 Git 仓库（Codemagic 支持 GitLab / GitHub / Bitbucket）
+
+### 一次性配置（首次约 30 分钟）
+
+1. **注册 Bundle ID**：https://developer.apple.com/account/resources/identifiers
+   → 添加 `com.sportpose.sportApp`
+
+2. **创建 App Store Connect 应用记录**：https://appstoreconnect.apple.com → My Apps → 新建 App，选择你注册的 Bundle ID
+
+3. **生成 App Store Connect API Key**：https://appstoreconnect.apple.com/access/api
+   → 创建密钥（勾选 App Manager 权限）→ 下载 `.p8` 文件，记录 Key ID 和 Issuer ID
+
+4. **在 Codemagic 中配置**：
+   - 注册账号 → https://codemagic.io ，导入 Git 仓库
+   - **Team → Integrations → Developer Portal**：添加 App Store Connect API key（Integration 名称填 `sportpose_appstore`，对应 `codemagic.yaml` 里的配置）
+   - **App Settings → Environment variables**：创建变量组 `appstore_credentials`，包含：
+     - `APP_STORE_CONNECT_PRIVATE_KEY`（`.p8` 文件内容）
+     - `APP_STORE_CONNECT_KEY_IDENTIFIER`
+     - `APP_STORE_CONNECT_ISSUER_ID`
+     - `CERTIFICATE_PRIVATE_KEY`（分发证书的私钥，Codemagic 首次自动生成后会提供下载）
+   - **App Settings → codemagic.yaml settings**：把签名证书生成方式设为 App Store Connect API key（自动签名）
+
+5. **修改 `codemagic.yaml` 中的通知邮箱**（`email.recipients`）
+
+### 触发编译
+
+推送代码到 `main` 分支即可自动触发：
+
+```bash
+git push origin main
+```
+
+或在 Codemagic 上手动点 **Start new build**。
+
+### 下载到 iPhone
+
+1. 构建成功后进入 TestFlight 上传流程（post-processing 自动完成）
+2. iPhone 上安装 **TestFlight** App，登录同一个 Apple ID
+3. 首次上传后需在 App Store Connect → TestFlight → 构建版本，完成**出口合规**确认（加密选项，若只用 HTTPS 选"不适用"）
+4. 在 TestFlight 中接受并安装 App（Internal 组内测无需 Beta 审核）
+
+> 注意：本地（Windows）无法执行 `flutter build ios`，此命令只能在 macOS 上运行。
+
+## 项目结构
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.freedesktop.org/qinyu1999/sport.git
-git branch -M main
-git push -uf origin main
+sport_app/lib/
+├── main.dart                    # 入口
+├── models/                      # 数据模型
+│   ├── pose_landmark.dart
+│   ├── frame_data.dart
+│   ├── gait_event.dart
+│   ├── gait_cycle.dart
+│   └── analysis_result.dart
+├── services/                    # 业务逻辑
+│   ├── pose_detector_service.dart
+│   ├── gait_analysis_service.dart
+│   └── swimming_analysis_service.dart
+├── ui/                          # 界面
+│   ├── home_screen.dart
+│   ├── camera_screen.dart
+│   └── result_screen.dart
+└── utils/                       # 工具
+    ├── angle_calculator.dart
+    └── pose_painter.dart
 ```
-
-## Integrate with your tools
-
-* [Set up project integrations](https://gitlab.freedesktop.org/qinyu1999/sport/-/settings/integrations)
-
-## Collaborate with your team
-
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.

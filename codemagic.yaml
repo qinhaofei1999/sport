@@ -1,0 +1,49 @@
+workflows:
+  ios-workflow:
+    name: iOS Build + TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    working_directory: sport_app
+    integrations:
+      app_store_connect: sportpose_appstore
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: "main"
+          include: true
+          source: true
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.sportpose.sportApp
+      flutter: 3.24.5
+      xcode: latest
+      cocoapods: default
+      groups:
+        - appstore_credentials
+    scripts:
+      - name: Flutter pub get
+        script: |
+          flutter pub get
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+      - name: Build iOS ipa
+        script: |
+          flutter build ipa --release --build-number=$BUILD_NUMBER
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal
+      email:
+        recipients:
+          - placeholder@example.com
+        notify:
+          success: true
+          failure: true

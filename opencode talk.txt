@@ -1,4 +1,14 @@
-  Session   MediaPipe游泳分析环境搭建与数据采集
-  Continue  opencode -s ses_0e46e32fcffezyJcV267qAXwKi
+Microsoft Windows [版本 10.0.22000.2538]
+(c) Microsoft Corporation。保留所有权利。
 
-[16:28:06.693] INFO (#9503): global event disconnected
+C:\Work_Data\Source_Code_New\Sport>opencode
+                                   ▄     
+  █▀▀█ █▀▀█ █▀▀█ █▀▀▄ █▀▀▀ █▀▀█ █▀▀█ █▀▀█
+  █  █ █  █ █▀▀▀ █  █ █    █  █ █  █ █▀▀▀
+  ▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀
+
+  Session   New session - 2026-07-13T22:23:28.866Z
+  Continue  opencode -s ses_0a26bfd9dffeBbK4k45dLFsa6m
+
+
+C:\Work_Data\Source_Code_New\Sport>
