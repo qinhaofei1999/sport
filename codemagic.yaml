@@ -43,7 +43,7 @@ workflows:
           - Internal
       email:
         recipients:
-          - placeholder@example.com
+          - 13801379640@139.com
         notify:
           success: true
           failure: true
