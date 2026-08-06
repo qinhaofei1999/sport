@@ -67,16 +67,31 @@ flutter run --device-id emulator-5554
    → 创建密钥（勾选 App Manager 权限）→ 下载 `.p8` 文件，记录 Key ID 和 Issuer ID
 
 4. **在 Codemagic 中配置**：
-   - 注册账号 → https://codemagic.io ，导入 Git 仓库
-   - **Team → Integrations → Developer Portal**：添加 App Store Connect API key（Integration 名称填 `sportpose_appstore`，对应 `codemagic.yaml` 里的配置）
-   - **App Settings → Environment variables**：创建变量组 `appstore_credentials`，包含：
-     - `APP_STORE_CONNECT_PRIVATE_KEY`（`.p8` 文件内容）
-     - `APP_STORE_CONNECT_KEY_IDENTIFIER`
-     - `APP_STORE_CONNECT_ISSUER_ID`
-     - `CERTIFICATE_PRIVATE_KEY`（分发证书的私钥，Codemagic 首次自动生成后会提供下载）
-   - **App Settings → codemagic.yaml settings**：把签名证书生成方式设为 App Store Connect API key（自动签名）
+   - 注册账号 → https://codemagic.io ，导入 Git 仓库（Self-hosted repository，粘贴 `git@ssh.gitlab.freedesktop.org:qinyu1999/sport.git`，把生成的公钥加到 GitLab）
+   - **Team settings → Team integrations → Developer Portal → Connect/Manage keys**：添加 App Store Connect API key（详见下方详细步骤）
 
 5. **修改 `codemagic.yaml` 中的通知邮箱**（`email.recipients`）
+
+### 在 Codemagic 配置 Apple Developer Portal 集成（详细步骤）
+
+**A. 在 Apple 侧创建 API Key（若未创建）**
+1. 登录 https://appstoreconnect.apple.com/access/api
+2. **Users and Access → Integrations → App Store Connect API** → 点 **+** 生成新 key
+3. 命名（如 `codemagic`），权限选 **App Manager**
+4. 点 **Generate**，然后 **Download API Key** 下载 `.p8` 文件（⚠️ 只能下载一次，妥善保存）
+5. 记录表格上方的 **Issuer ID** 和该 key 的 **Key ID**
+
+**B. 在 Codemagic 添加集成**
+1. 打开 https://codemagic.io → 左上角 Teams → 选你的账号 → **Team settings**
+2. 进入 **Team integrations** → 找到 **Developer Portal** → 点 **Connect**（或 **Manage keys**）
+3. 填写：
+   - **App Store Connect API key name**：填 `sportpose_appstore`（必须与 `codemagic.yaml` 中 `integrations.app_store_connect` 一致）
+   - **Issuer ID**：粘贴上面记录的
+   - **Key ID**：粘贴上面记录的
+   - **API key**：上传下载的 `.p8` 文件
+4. 点 **Save** 完成
+
+配置完成后，`codemagic.yaml` 已自动引用该 key 完成签名和 TestFlight 上传，无需再配置环境变量。
 
 ### 触发编译
 

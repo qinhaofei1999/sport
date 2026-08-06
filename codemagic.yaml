@@ -20,8 +20,6 @@ workflows:
       flutter: 3.24.5
       xcode: latest
       cocoapods: default
-      groups:
-        - appstore_credentials
     scripts:
       - name: Flutter pub get
         script: |
