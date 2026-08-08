@@ -16,7 +16,6 @@ jobs:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_API_KEY: ${{ secrets.ASC_API_KEY }}
-      APP_STORE_CONNECT_API_KEY_PATH: $HOME/private_keys/asc_key.json
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,6 +45,7 @@ jobs:
           with open(os.path.join(h, 'private_keys', 'asc_key.json'), 'w') as f:
               json.dump({'key_id': key_id, 'issuer_id': issuer_id, 'key': key}, f)
           "
+          echo "APP_STORE_CONNECT_API_KEY_PATH=$HOME/private_keys/asc_key.json" >> "$GITHUB_ENV"
 
       - name: Create / reuse Apple Distribution certificate
         run: fastlane cert
