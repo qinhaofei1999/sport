@@ -368,6 +368,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2M9MUAU796;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sportpose.sportApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -547,6 +549,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2M9MUAU796;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sportpose.sportApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -569,6 +573,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2M9MUAU796;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sportpose.sportApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
