@@ -55,6 +55,8 @@ jobs:
         run: flutter build ios --release --no-codesign --build-number=${{ github.run_number }}
 
       - name: Sign and export ipa (fastlane match + gym)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd ios
           fastlane beta

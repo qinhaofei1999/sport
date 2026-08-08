@@ -18,7 +18,7 @@ platform :ios do
       app_identifier: 'com.sportpose.sportApp',
       git_url: 'https://github.com/qinhaofei1999/sport.git',
       git_branch: 'fastlane-match',
-      git_basic_authorization: "Basic #{Base64.strict_encode64("x-access-token:#{ENV['GITHUB_TOKEN']}")}",
+      git_basic_authorization: Base64.strict_encode64("x-access-token:#{ENV['GITHUB_TOKEN']}"),
       shallow_clone: true
     )
 
