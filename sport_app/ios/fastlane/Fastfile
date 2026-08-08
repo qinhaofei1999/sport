@@ -1,10 +1,27 @@
 require 'base64'
+require 'securerandom'
 
 default_platform(:ios)
 
 platform :ios do
   desc "Build and sign the App Store ipa"
   lane :beta do
+    setup_ci(
+      force: true
+    )
+
+    keychain_name = 'fastlane_build.keychain'
+    keychain_password = ENV['MATCH_KEYCHAIN_PASSWORD'] || SecureRandom.hex(12)
+
+    create_keychain(
+      name: keychain_name,
+      password: keychain_password,
+      default_keychain: true,
+      unlock: true,
+      timeout: 3600,
+      lock_when_sleeps: false
+    )
+
     api_key = app_store_connect_api_key(
       key_id: ENV['ASC_KEY_ID'],
       issuer_id: ENV['ASC_ISSUER_ID'],
@@ -19,7 +36,9 @@ platform :ios do
       git_url: 'https://github.com/qinhaofei1999/sport.git',
       git_branch: 'fastlane-match',
       git_basic_authorization: Base64.strict_encode64("x-access-token:#{ENV['GITHUB_TOKEN']}"),
-      shallow_clone: true
+      shallow_clone: true,
+      keychain_name: keychain_name,
+      keychain_password: keychain_password
     )
 
     gym(
