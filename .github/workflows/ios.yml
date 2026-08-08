@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-ios:
     name: Build iOS ipa and upload to TestFlight
@@ -16,6 +19,7 @@ jobs:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_API_KEY: ${{ secrets.ASC_API_KEY }}
+      MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,25 +51,13 @@ jobs:
           "
           echo "APP_STORE_CONNECT_API_KEY_PATH=$HOME/private_keys/asc_key.json" >> "$GITHUB_ENV"
 
-      - name: Create / reuse Apple Distribution certificate
-        run: fastlane cert
-
-      - name: Create / reuse App Store provisioning profile
-        run: |
-          fastlane sigh -a com.sportpose.sportApp
-
       - name: Build Flutter iOS app (unsigned)
         run: flutter build ios --release --no-codesign --build-number=${{ github.run_number }}
 
-      - name: Sign and export ipa
+      - name: Sign and export ipa (fastlane match + gym)
         run: |
-          fastlane gym \
-            --workspace ios/Runner.xcworkspace \
-            --scheme Runner \
-            --clean \
-            --export_method app-store \
-            --export_team_id 2M9MUAU796 \
-            --output_directory build/ios/ipa
+          cd ios
+          fastlane beta
 
       - name: Upload to TestFlight
         run: |
