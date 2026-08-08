@@ -1,0 +1,70 @@
+name: iOS Build & TestFlight
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Build iOS ipa and upload to TestFlight
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: sport_app
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_PATH: $HOME/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.ASC_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Write App Store Connect API key
+        run: |
+          mkdir -p "$HOME/private_keys"
+          echo "${{ secrets.ASC_API_KEY }}" > "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          chmod 600 "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+
+      - name: Create / reuse Apple Distribution certificate
+        run: fastlane cert
+
+      - name: Create / reuse App Store provisioning profile
+        run: |
+          fastlane sigh -a com.sportpose.sportApp
+
+      - name: Build Flutter iOS app (unsigned)
+        run: flutter build ios --release --no-codesign --build-number=${{ github.run_number }}
+
+      - name: Sign and export ipa
+        run: |
+          fastlane gym \
+            --workspace ios/Runner.xcworkspace \
+            --scheme Runner \
+            --clean \
+            --export_method app-store \
+            --export_team_id 2M9MUAU796 \
+            --output_directory build/ios/ipa
+
+      - name: Upload to TestFlight
+        run: |
+          xcrun altool --upload-app \
+            -f build/ios/ipa/Runner.ipa \
+            -t ios \
+            --apiKey ${ASC_KEY_ID} \
+            --apiIssuer ${ASC_ISSUER_ID} \
+            --verbose
