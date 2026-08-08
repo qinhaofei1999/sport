@@ -37,15 +37,15 @@ jobs:
           echo "$ASC_API_KEY" > "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8"
           chmod 600 "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8"
           python3 -c "
-import json, os
-h = os.path.expanduser('~')
-key_id = os.environ['ASC_KEY_ID']
-issuer_id = os.environ['ASC_ISSUER_ID']
-with open(os.path.join(h, 'private_keys', 'AuthKey_%s.p8' % key_id)) as f:
-    key = f.read()
-with open(os.path.join(h, 'private_keys', 'asc_key.json'), 'w') as f:
-    json.dump({'key_id': key_id, 'issuer_id': issuer_id, 'key': key}, f)
-"
+          import json, os
+          h = os.path.expanduser('~')
+          key_id = os.environ['ASC_KEY_ID']
+          issuer_id = os.environ['ASC_ISSUER_ID']
+          with open(os.path.join(h, 'private_keys', 'AuthKey_%s.p8' % key_id)) as f:
+              key = f.read()
+          with open(os.path.join(h, 'private_keys', 'asc_key.json'), 'w') as f:
+              json.dump({'key_id': key_id, 'issuer_id': issuer_id, 'key': key}, f)
+          "
 
       - name: Create / reuse Apple Distribution certificate
         run: fastlane cert
