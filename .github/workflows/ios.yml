@@ -43,7 +43,7 @@ jobs:
           with open(os.path.join(h, 'private_keys', 'AuthKey_%s.p8' % key_id)) as f:
               key = f.read()
           with open(os.path.join(h, 'private_keys', 'asc_key.json'), 'w') as f:
-              json.dump({'key_id': key_id, 'issuer_id': issuer_id, 'key': key}, f)
+              json.dump({'key_id': key_id, 'issuer_id': issuer_id, 'key': key, 'in_house': False}, f)
           "
           echo "APP_STORE_CONNECT_API_KEY_PATH=$HOME/private_keys/asc_key.json" >> "$GITHUB_ENV"
 
