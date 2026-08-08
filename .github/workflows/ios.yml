@@ -15,11 +15,9 @@ jobs:
     env:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-      APP_STORE_CONNECT_API_KEY_PATH: $HOME/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+      APP_STORE_CONNECT_API_KEY: ${{ secrets.ASC_API_KEY }}
       APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-      APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.ASC_KEY_ID }}
-      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
