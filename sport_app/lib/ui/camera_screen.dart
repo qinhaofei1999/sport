@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart' as ml;
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
@@ -58,7 +59,9 @@ class _CameraScreenState extends State<CameraScreen> {
       camera,
       ResolutionPreset.high,
       enableAudio: false,
-      imageFormatGroup: ImageFormatGroup.yuv420,
+      imageFormatGroup: io.Platform.isIOS
+          ? ImageFormatGroup.bgra8888
+          : ImageFormatGroup.yuv420,
     );
 
     await _cameraController!.initialize();
@@ -91,15 +94,12 @@ class _CameraScreenState extends State<CameraScreen> {
       return;
     }
 
-    final cameraSize = _cameraController?.value.previewSize;
-    if (cameraSize == null) return;
-
     final rotation = _getCameraRotation();
 
     _poseService!.processCameraImage(
       image,
-      inputImageWidth: cameraSize.width.round(),
-      inputImageHeight: cameraSize.height.round(),
+      inputImageWidth: image.width,
+      inputImageHeight: image.height,
       rotation: rotation,
     ).then((landmarks) {
       if (!mounted) return;
@@ -122,7 +122,36 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   ml.InputImageRotation _getCameraRotation() {
-    return ml.InputImageRotation.rotation0deg;
+    final controller = _cameraController;
+    if (controller == null) return ml.InputImageRotation.rotation0deg;
+
+    final sensorOrientation = controller.description.sensorOrientation;
+
+    if (io.Platform.isIOS) {
+      return _rotationFromDegrees(sensorOrientation);
+    }
+
+    final deviceDegrees = switch (controller.value.deviceOrientation) {
+      DeviceOrientation.portraitUp => 0,
+      DeviceOrientation.landscapeLeft => 90,
+      DeviceOrientation.portraitDown => 180,
+      DeviceOrientation.landscapeRight => 270,
+    };
+    final isFront =
+        controller.description.lensDirection == CameraLensDirection.front;
+    final compensation = isFront
+        ? (sensorOrientation + deviceDegrees) % 360
+        : (sensorOrientation - deviceDegrees + 360) % 360;
+    return _rotationFromDegrees(compensation);
+  }
+
+  ml.InputImageRotation _rotationFromDegrees(int degrees) {
+    return switch (degrees % 360) {
+      90 => ml.InputImageRotation.rotation90deg,
+      180 => ml.InputImageRotation.rotation180deg,
+      270 => ml.InputImageRotation.rotation270deg,
+      _ => ml.InputImageRotation.rotation0deg,
+    };
   }
 
   Future<void> _runAnalysis() async {
