@@ -37,6 +37,7 @@ class _CameraScreenState extends State<CameraScreen> {
   Map<String, double?>? _currentAngles;
   final double _fps = 30;
   Size? _cameraSize;
+  Size? _effectiveImageSize;
 
   @override
   void initState() {
@@ -108,6 +109,13 @@ class _CameraScreenState extends State<CameraScreen> {
       if (landmarks != null && landmarks.isNotEmpty) {
         final angles = AngleCalculator.calcJointAngles(landmarks);
         _currentLandmarks = landmarks;
+
+        final isRotated = rotation == ml.InputImageRotation.rotation90deg ||
+            rotation == ml.InputImageRotation.rotation270deg;
+        _effectiveImageSize = Size(
+          (isRotated ? image.height : image.width).toDouble(),
+          (isRotated ? image.width : image.height).toDouble(),
+        );
 
         if (mounted) {
           setState(() {
@@ -353,7 +361,9 @@ class _CameraScreenState extends State<CameraScreen> {
                 painter: PosePainter(
                   landmarks: _currentLandmarks,
                   angles: _currentAngles,
-                  imageSize: _cameraSize ?? const Size(640, 480),
+                  imageSize: _effectiveImageSize ??
+                      _cameraSize ??
+                      const Size(640, 480),
                   sportType: widget.sportType,
                 ),
               ),

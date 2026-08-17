@@ -59,7 +59,7 @@ class PosePainter extends CustomPainter {
       final p1 = lm[conn[0]];
       final p2 = lm[conn[1]];
       if (p1 == null || p2 == null) continue;
-      if (p1.visibility < 0.3 || p2.visibility < 0.3) continue;
+      if (p1.visibility < 0.1 || p2.visibility < 0.1) continue;
 
       final x1 = p1.x * imageSize.width * scale + offsetX;
       final y1 = p1.y * imageSize.height * scale + offsetY;
@@ -71,19 +71,19 @@ class PosePainter extends CustomPainter {
         Offset(x2, y2),
         Paint()
           ..color = Colors.cyan.withAlpha(200)
-          ..strokeWidth = 2.5
+          ..strokeWidth = 3.5
           ..strokeCap = StrokeCap.round,
       );
     }
 
     for (final l in landmarks!) {
-      if (l.visibility < 0.3) continue;
+      if (l.visibility < 0.1) continue;
       final x = l.x * imageSize.width * scale + offsetX;
       final y = l.y * imageSize.height * scale + offsetY;
 
       canvas.drawCircle(
         Offset(x, y),
-        4,
+        6,
         Paint()..color = Colors.yellow..style = PaintingStyle.fill,
       );
     }
