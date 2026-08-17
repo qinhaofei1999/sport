@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/pose_landmark.dart';
 
@@ -44,11 +43,9 @@ class PosePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (landmarks == null || landmarks!.isEmpty) return;
 
-    final scaleX = size.width / imageSize.width;
-    final scaleY = size.height / imageSize.height;
-    final scale = min(scaleX, scaleY);
-    final offsetX = (size.width - imageSize.width * scale) / 2;
-    final offsetY = (size.height - imageSize.height * scale) / 2;
+    final bool imageLandscape = imageSize.width > imageSize.height;
+    final bool displayPortrait = size.width < size.height;
+    final bool rotate90 = imageLandscape != displayPortrait;
 
     final lm = <int, PoseLandmark>{};
     for (final l in landmarks!) {
@@ -61,14 +58,12 @@ class PosePainter extends CustomPainter {
       if (p1 == null || p2 == null) continue;
       if (p1.visibility < 0.1 || p2.visibility < 0.1) continue;
 
-      final x1 = p1.x * imageSize.width * scale + offsetX;
-      final y1 = p1.y * imageSize.height * scale + offsetY;
-      final x2 = p2.x * imageSize.width * scale + offsetX;
-      final y2 = p2.y * imageSize.height * scale + offsetY;
+      final pos1 = _map(p1.x, p1.y, size, rotate90);
+      final pos2 = _map(p2.x, p2.y, size, rotate90);
 
       canvas.drawLine(
-        Offset(x1, y1),
-        Offset(x2, y2),
+        pos1,
+        pos2,
         Paint()
           ..color = Colors.cyan.withAlpha(200)
           ..strokeWidth = 3.5
@@ -78,11 +73,10 @@ class PosePainter extends CustomPainter {
 
     for (final l in landmarks!) {
       if (l.visibility < 0.1) continue;
-      final x = l.x * imageSize.width * scale + offsetX;
-      final y = l.y * imageSize.height * scale + offsetY;
+      final pos = _map(l.x, l.y, size, rotate90);
 
       canvas.drawCircle(
-        Offset(x, y),
+        pos,
         6,
         Paint()..color = Colors.yellow..style = PaintingStyle.fill,
       );
@@ -104,17 +98,17 @@ class PosePainter extends CustomPainter {
 
         Offset anchor;
         if (key == 'knee_left') {
-          anchor = _lmOffset(lm[25], scale, offsetX, offsetY);
+          anchor = _lmOffset(lm[25], size, rotate90);
         } else if (key == 'knee_right') {
-          anchor = _lmOffset(lm[26], scale, offsetX, offsetY);
+          anchor = _lmOffset(lm[26], size, rotate90);
         } else if (key == 'ankle_left') {
-          anchor = _lmOffset(lm[27], scale, offsetX, offsetY);
+          anchor = _lmOffset(lm[27], size, rotate90);
         } else if (key == 'ankle_right') {
-          anchor = _lmOffset(lm[28], scale, offsetX, offsetY);
+          anchor = _lmOffset(lm[28], size, rotate90);
         } else if (key == 'hip_left') {
-          anchor = _lmOffset(lm[23], scale, offsetX, offsetY);
+          anchor = _lmOffset(lm[23], size, rotate90);
         } else {
-          anchor = _lmOffset(lm[24], scale, offsetX, offsetY);
+          anchor = _lmOffset(lm[24], size, rotate90);
         }
 
         final text = '${key.split('_').last} ${val.toStringAsFixed(0)}°';
@@ -146,14 +140,37 @@ class PosePainter extends CustomPainter {
     if (sportType == 'running') {
       _drawSportBadge(canvas, size);
     }
+
+    if (landmarks!.isNotEmpty) {
+      final first = landmarks!.first;
+      final pos = _map(first.x, first.y, size, rotate90);
+      final debugPainter = TextPainter(
+        text: TextSpan(
+          text:
+              'raw:(${first.x.toStringAsFixed(2)},${first.y.toStringAsFixed(2)}) map:(${pos.dx.toStringAsFixed(0)},${pos.dy.toStringAsFixed(0)}) rot:$rotate90 img:${imageSize.width.toStringAsFixed(0)}x${imageSize.height.toStringAsFixed(0)} w:${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)}',
+          style: const TextStyle(
+            color: Colors.red,
+            fontSize: 10,
+            backgroundColor: Colors.white70,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      debugPainter.layout();
+      debugPainter.paint(canvas, Offset(10, size.height - 30));
+    }
   }
 
-  Offset _lmOffset(PoseLandmark? lm, double scale, double ox, double oy) {
+  Offset _map(double x, double y, Size displaySize, bool rotate90) {
+    if (!rotate90) {
+      return Offset(x * displaySize.width, y * displaySize.height);
+    }
+    return Offset(y * displaySize.width, x * displaySize.height);
+  }
+
+  Offset _lmOffset(PoseLandmark? lm, Size displaySize, bool rotate90) {
     if (lm == null) return Offset.zero;
-    return Offset(
-      lm.x * imageSize.width * scale + ox,
-      lm.y * imageSize.height * scale + oy,
-    );
+    return _map(lm.x, lm.y, displaySize, rotate90);
   }
 
   void _drawSportBadge(Canvas canvas, Size size) {

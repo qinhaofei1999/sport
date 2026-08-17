@@ -104,27 +104,33 @@ class _CameraScreenState extends State<CameraScreen> {
       rotation: rotation,
     ).then((landmarks) {
       if (!mounted) return;
-      _frameCount++;
 
       if (landmarks != null && landmarks.isNotEmpty) {
         final angles = AngleCalculator.calcJointAngles(landmarks);
-        _currentLandmarks = landmarks;
 
         final isRotated = rotation == ml.InputImageRotation.rotation90deg ||
             rotation == ml.InputImageRotation.rotation270deg;
-        _effectiveImageSize = Size(
+        final effectiveSize = Size(
           (isRotated ? image.height : image.width).toDouble(),
           (isRotated ? image.width : image.height).toDouble(),
         );
 
         if (mounted) {
           setState(() {
+            _frameCount++;
+            _currentLandmarks = landmarks;
             _currentAngles = angles;
+            _effectiveImageSize = effectiveSize;
+            _frameLandmarks.add(landmarks);
           });
         }
-        _frameLandmarks.add(landmarks);
       } else {
-        _frameLandmarks.add(null);
+        if (mounted) {
+          setState(() {
+            _frameCount++;
+            _frameLandmarks.add(null);
+          });
+        }
       }
     });
   }
