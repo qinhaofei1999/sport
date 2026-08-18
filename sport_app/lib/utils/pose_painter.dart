@@ -57,8 +57,8 @@ class PosePainter extends CustomPainter {
       if (p1 == null || p2 == null) continue;
       if (p1.visibility < 0.1 || p2.visibility < 0.1) continue;
 
-      final pos1 = _map(p1.x, p1.y, size, needRotate);
-      final pos2 = _map(p2.x, p2.y, size, needRotate);
+      final pos1 = _map(_normX(p1.x), _normY(p1.y), size, needRotate);
+      final pos2 = _map(_normX(p2.x), _normY(p2.y), size, needRotate);
 
       canvas.drawLine(
         pos1,
@@ -72,7 +72,7 @@ class PosePainter extends CustomPainter {
 
     for (final l in landmarks!) {
       if (l.visibility < 0.1) continue;
-      final pos = _map(l.x, l.y, size, needRotate);
+      final pos = _map(_normX(l.x), _normY(l.y), size, needRotate);
 
       canvas.drawCircle(
         pos,
