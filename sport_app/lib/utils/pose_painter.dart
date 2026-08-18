@@ -43,9 +43,8 @@ class PosePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (landmarks == null || landmarks!.isEmpty) return;
 
-    final bool imageLandscape = imageSize.width > imageSize.height;
-    final bool displayPortrait = size.width < size.height;
-    final bool rotate90 = imageLandscape != displayPortrait;
+    final bool needRotate = imageSize.width > imageSize.height &&
+        size.width < size.height;
 
     final lm = <int, PoseLandmark>{};
     for (final l in landmarks!) {
@@ -58,8 +57,8 @@ class PosePainter extends CustomPainter {
       if (p1 == null || p2 == null) continue;
       if (p1.visibility < 0.1 || p2.visibility < 0.1) continue;
 
-      final pos1 = _map(p1.x, p1.y, size, rotate90);
-      final pos2 = _map(p2.x, p2.y, size, rotate90);
+      final pos1 = _map(p1.x, p1.y, size, needRotate);
+      final pos2 = _map(p2.x, p2.y, size, needRotate);
 
       canvas.drawLine(
         pos1,
@@ -73,7 +72,7 @@ class PosePainter extends CustomPainter {
 
     for (final l in landmarks!) {
       if (l.visibility < 0.1) continue;
-      final pos = _map(l.x, l.y, size, rotate90);
+      final pos = _map(l.x, l.y, size, needRotate);
 
       canvas.drawCircle(
         pos,
@@ -98,17 +97,17 @@ class PosePainter extends CustomPainter {
 
         Offset anchor;
         if (key == 'knee_left') {
-          anchor = _lmOffset(lm[25], size, rotate90);
+          anchor = _lmOffset(lm[25], size, needRotate);
         } else if (key == 'knee_right') {
-          anchor = _lmOffset(lm[26], size, rotate90);
+          anchor = _lmOffset(lm[26], size, needRotate);
         } else if (key == 'ankle_left') {
-          anchor = _lmOffset(lm[27], size, rotate90);
+          anchor = _lmOffset(lm[27], size, needRotate);
         } else if (key == 'ankle_right') {
-          anchor = _lmOffset(lm[28], size, rotate90);
+          anchor = _lmOffset(lm[28], size, needRotate);
         } else if (key == 'hip_left') {
-          anchor = _lmOffset(lm[23], size, rotate90);
+          anchor = _lmOffset(lm[23], size, needRotate);
         } else {
-          anchor = _lmOffset(lm[24], size, rotate90);
+          anchor = _lmOffset(lm[24], size, needRotate);
         }
 
         final text = '${key.split('_').last} ${val.toStringAsFixed(0)}°';
@@ -141,24 +140,40 @@ class PosePainter extends CustomPainter {
       _drawSportBadge(canvas, size);
     }
 
-    if (landmarks!.isNotEmpty) {
-      final first = landmarks!.first;
-      final pos = _map(first.x, first.y, size, rotate90);
-      final debugPainter = TextPainter(
-        text: TextSpan(
-          text:
-              'raw:(${first.x.toStringAsFixed(2)},${first.y.toStringAsFixed(2)}) map:(${pos.dx.toStringAsFixed(0)},${pos.dy.toStringAsFixed(0)}) rot:$rotate90 img:${imageSize.width.toStringAsFixed(0)}x${imageSize.height.toStringAsFixed(0)} w:${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)}',
-          style: const TextStyle(
-            color: Colors.red,
-            fontSize: 10,
-            backgroundColor: Colors.white70,
-          ),
+    final first = landmarks!.first;
+    final nx = _normX(first.x);
+    final ny = _normY(first.y);
+    final pos = _map(nx, ny, size, needRotate);
+    final debugPainter = TextPainter(
+      text: TextSpan(
+        text:
+            'raw:(${first.x.toStringAsFixed(1)},${first.y.toStringAsFixed(1)}) n:(${nx.toStringAsFixed(2)},${ny.toStringAsFixed(2)}) map:(${pos.dx.toStringAsFixed(0)},${pos.dy.toStringAsFixed(0)}) rot:$needRotate img:${imageSize.width.toStringAsFixed(0)}x${imageSize.height.toStringAsFixed(0)} w:${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)}',
+        style: const TextStyle(
+          color: Colors.red,
+          fontSize: 10,
+          backgroundColor: Colors.white70,
         ),
-        textDirection: TextDirection.ltr,
-      );
-      debugPainter.layout();
-      debugPainter.paint(canvas, Offset(10, size.height - 30));
-    }
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    debugPainter.layout();
+    debugPainter.paint(canvas, Offset(10, size.height - 30));
+  }
+
+  double _normX(double x) {
+    if (x <= 1.0) return x;
+    final w = imageSize.width > imageSize.height
+        ? imageSize.height
+        : imageSize.width;
+    return (x / w).clamp(0.0, 1.0);
+  }
+
+  double _normY(double y) {
+    if (y <= 1.0) return y;
+    final h = imageSize.width > imageSize.height
+        ? imageSize.width
+        : imageSize.height;
+    return (y / h).clamp(0.0, 1.0);
   }
 
   Offset _map(double x, double y, Size displaySize, bool rotate90) {
@@ -170,7 +185,7 @@ class PosePainter extends CustomPainter {
 
   Offset _lmOffset(PoseLandmark? lm, Size displaySize, bool rotate90) {
     if (lm == null) return Offset.zero;
-    return _map(lm.x, lm.y, displaySize, rotate90);
+    return _map(_normX(lm.x), _normY(lm.y), displaySize, rotate90);
   }
 
   void _drawSportBadge(Canvas canvas, Size size) {
