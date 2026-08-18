@@ -46,24 +46,51 @@ class PosePainter extends CustomPainter {
       lm[l.id] = l;
     }
 
-    for (final conn in _bodyConnections) {
-      final p1 = lm[conn[0]];
-      final p2 = lm[conn[1]];
-      if (p1 == null || p2 == null) continue;
-      if (p1.visibility < 0.1 || p2.visibility < 0.1) continue;
+    final upperConnections = [
+      [11, 12],
+      [11, 13],
+      [13, 15],
+      [12, 14],
+      [14, 16],
+    ];
 
-      final pos1 = _toDisplay(p1.x, p1.y, size, pixelCoords);
-      final pos2 = _toDisplay(p2.x, p2.y, size, pixelCoords);
+    final torsoConnections = [
+      [11, 23],
+      [12, 24],
+      [23, 24],
+    ];
 
-      canvas.drawLine(
-        pos1,
-        pos2,
-        Paint()
-          ..color = Colors.cyan.withAlpha(200)
-          ..strokeWidth = 3.5
-          ..strokeCap = StrokeCap.round,
-      );
+    final lowerConnections = [
+      [23, 25],
+      [25, 27],
+      [24, 26],
+      [26, 28],
+    ];
+
+    void drawConns(List<List<int>> conns, Color color) {
+      for (final conn in conns) {
+        final p1 = lm[conn[0]];
+        final p2 = lm[conn[1]];
+        if (p1 == null || p2 == null) continue;
+        if (p1.visibility < 0.1 || p2.visibility < 0.1) continue;
+
+        final pos1 = _toDisplay(p1.x, p1.y, size, pixelCoords);
+        final pos2 = _toDisplay(p2.x, p2.y, size, pixelCoords);
+
+        canvas.drawLine(
+          pos1,
+          pos2,
+          Paint()
+            ..color = color
+            ..strokeWidth = 3.5
+            ..strokeCap = StrokeCap.round,
+        );
+      }
     }
+
+    drawConns(upperConnections, Colors.cyan.withAlpha(200));
+    drawConns(torsoConnections, Colors.white.withAlpha(180));
+    drawConns(lowerConnections, Colors.greenAccent.withAlpha(200));
 
     for (final l in landmarks!) {
       if (l.visibility < 0.1) continue;
@@ -71,10 +98,13 @@ class PosePainter extends CustomPainter {
 
       final pos = _toDisplay(l.x, l.y, size, pixelCoords);
 
+      final bool isLower = l.id >= 23;
       canvas.drawCircle(
         pos,
         6,
-        Paint()..color = Colors.yellow..style = PaintingStyle.fill,
+        Paint()
+          ..color = isLower ? Colors.greenAccent : Colors.cyan
+          ..style = PaintingStyle.fill,
       );
     }
 
