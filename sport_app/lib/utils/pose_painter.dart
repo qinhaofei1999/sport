@@ -166,7 +166,7 @@ class PosePainter extends CustomPainter {
         normW = imageSize.width;
         normH = imageSize.height;
       }
-      final nx = (x / normW).clamp(0.0, 1.0);
+      final nx = (1.0 - x / normW).clamp(0.0, 1.0);
       final ny = (y / normH).clamp(0.0, 1.0);
       return Offset(nx * displaySize.width, ny * displaySize.height);
     }
