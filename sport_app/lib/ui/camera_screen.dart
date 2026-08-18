@@ -244,9 +244,23 @@ class _CameraScreenState extends State<CameraScreen> {
         child: Stack(
           children: [
             if (_isInitialized && _cameraController != null)
-              _buildCameraPreview()
+              Positioned.fill(child: _cameraController!.buildPreview())
             else
               const Center(child: CircularProgressIndicator()),
+
+            if (_currentLandmarks != null)
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: PosePainter(
+                    landmarks: _currentLandmarks,
+                    angles: _currentAngles,
+                    imageSize: _effectiveImageSize ??
+                        _cameraSize ??
+                        const Size(640, 480),
+                    sportType: widget.sportType,
+                  ),
+                ),
+              ),
 
             _buildOverlay(),
 
@@ -352,34 +366,6 @@ class _CameraScreenState extends State<CameraScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildCameraPreview() {
-    final cameraPreview = _cameraController!.buildPreview();
-
-    if (_currentLandmarks != null) {
-      return ClipRect(
-        child: Stack(
-          children: [
-            cameraPreview,
-            Positioned.fill(
-              child: CustomPaint(
-                painter: PosePainter(
-                  landmarks: _currentLandmarks,
-                  angles: _currentAngles,
-                  imageSize: _effectiveImageSize ??
-                      _cameraSize ??
-                      const Size(640, 480),
-                  sportType: widget.sportType,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return cameraPreview;
   }
 
   Widget _buildOverlay() {
