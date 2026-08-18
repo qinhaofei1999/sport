@@ -7,30 +7,25 @@ class PosePainter extends CustomPainter {
   final Size imageSize;
   final String? sportType;
 
-  static const _skeletonConnections = [
+  static const _bodyConnections = [
     [11, 12],
+    [11, 23],
     [12, 24],
-    [24, 23],
-    [23, 11],
+    [23, 24],
     [11, 13],
     [13, 15],
-    [15, 17],
-    [17, 19],
-    [19, 15],
     [12, 14],
     [14, 16],
-    [16, 18],
-    [18, 20],
-    [20, 16],
     [23, 25],
     [25, 27],
-    [27, 29],
-    [29, 31],
     [24, 26],
     [26, 28],
-    [28, 30],
-    [30, 32],
   ];
+
+  static const _bodyLandmarkIds = {
+    11, 12, 13, 14, 15, 16,
+    23, 24, 25, 26, 27, 28,
+  };
 
   PosePainter({
     this.landmarks,
@@ -43,22 +38,22 @@ class PosePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (landmarks == null || landmarks!.isEmpty) return;
 
-    final bool needRotate = imageSize.width > imageSize.height &&
-        size.width < size.height;
+    final bool pixelCoords =
+        landmarks!.any((l) => l.x > 1.0 || l.y > 1.0);
 
     final lm = <int, PoseLandmark>{};
     for (final l in landmarks!) {
       lm[l.id] = l;
     }
 
-    for (final conn in _skeletonConnections) {
+    for (final conn in _bodyConnections) {
       final p1 = lm[conn[0]];
       final p2 = lm[conn[1]];
       if (p1 == null || p2 == null) continue;
       if (p1.visibility < 0.1 || p2.visibility < 0.1) continue;
 
-      final pos1 = _map(_normX(p1.x), _normY(p1.y), size, needRotate);
-      final pos2 = _map(_normX(p2.x), _normY(p2.y), size, needRotate);
+      final pos1 = _toDisplay(p1.x, p1.y, size, pixelCoords);
+      final pos2 = _toDisplay(p2.x, p2.y, size, pixelCoords);
 
       canvas.drawLine(
         pos1,
@@ -72,7 +67,9 @@ class PosePainter extends CustomPainter {
 
     for (final l in landmarks!) {
       if (l.visibility < 0.1) continue;
-      final pos = _map(_normX(l.x), _normY(l.y), size, needRotate);
+      if (!_bodyLandmarkIds.contains(l.id)) continue;
+
+      final pos = _toDisplay(l.x, l.y, size, pixelCoords);
 
       canvas.drawCircle(
         pos,
@@ -95,20 +92,17 @@ class PosePainter extends CustomPainter {
         final val = angles![key];
         if (val == null) continue;
 
-        Offset anchor;
-        if (key == 'knee_left') {
-          anchor = _lmOffset(lm[25], size, needRotate);
-        } else if (key == 'knee_right') {
-          anchor = _lmOffset(lm[26], size, needRotate);
-        } else if (key == 'ankle_left') {
-          anchor = _lmOffset(lm[27], size, needRotate);
-        } else if (key == 'ankle_right') {
-          anchor = _lmOffset(lm[28], size, needRotate);
-        } else if (key == 'hip_left') {
-          anchor = _lmOffset(lm[23], size, needRotate);
-        } else {
-          anchor = _lmOffset(lm[24], size, needRotate);
-        }
+        int? anchorId;
+        if (key == 'knee_left') anchorId = 25;
+        if (key == 'knee_right') anchorId = 26;
+        if (key == 'ankle_left') anchorId = 27;
+        if (key == 'ankle_right') anchorId = 28;
+        if (key == 'hip_left') anchorId = 23;
+        if (key == 'hip_right') anchorId = 24;
+
+        final anchorLm = lm[anchorId!];
+        if (anchorLm == null) continue;
+        final anchor = _toDisplay(anchorLm.x, anchorLm.y, size, pixelCoords);
 
         final text = '${key.split('_').last} ${val.toStringAsFixed(0)}°';
         final textPainter = TextPainter(
@@ -140,14 +134,16 @@ class PosePainter extends CustomPainter {
       _drawSportBadge(canvas, size);
     }
 
-    final first = landmarks!.first;
-    final nx = _normX(first.x);
-    final ny = _normY(first.y);
-    final pos = _map(nx, ny, size, needRotate);
+    final first = landmarks!.firstWhere(
+      (l) => _bodyLandmarkIds.contains(l.id),
+      orElse: () => landmarks!.first,
+    );
+    final npos = _toDisplay(first.x, first.y, size, pixelCoords);
+    final rawStr = '(${first.x.toStringAsFixed(0)},${first.y.toStringAsFixed(0)})';
+    final mapStr = '(${npos.dx.toStringAsFixed(0)},${npos.dy.toStringAsFixed(0)})';
     final debugPainter = TextPainter(
       text: TextSpan(
-        text:
-            'raw:(${first.x.toStringAsFixed(1)},${first.y.toStringAsFixed(1)}) n:(${nx.toStringAsFixed(2)},${ny.toStringAsFixed(2)}) map:(${pos.dx.toStringAsFixed(0)},${pos.dy.toStringAsFixed(0)}) rot:$needRotate img:${imageSize.width.toStringAsFixed(0)}x${imageSize.height.toStringAsFixed(0)} w:${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)}',
+        text: 'raw:$rawStr map:$mapStr px:$pixelCoords img:${imageSize.width.toStringAsFixed(0)}x${imageSize.height.toStringAsFixed(0)} scr:${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)}',
         style: const TextStyle(
           color: Colors.red,
           fontSize: 10,
@@ -160,32 +156,21 @@ class PosePainter extends CustomPainter {
     debugPainter.paint(canvas, Offset(10, size.height - 30));
   }
 
-  double _normX(double x) {
-    if (x <= 1.0) return x;
-    final w = imageSize.width > imageSize.height
-        ? imageSize.height
-        : imageSize.width;
-    return (x / w).clamp(0.0, 1.0);
-  }
-
-  double _normY(double y) {
-    if (y <= 1.0) return y;
-    final h = imageSize.width > imageSize.height
-        ? imageSize.width
-        : imageSize.height;
-    return (y / h).clamp(0.0, 1.0);
-  }
-
-  Offset _map(double x, double y, Size displaySize, bool rotate90) {
-    if (!rotate90) {
-      return Offset(x * displaySize.width, y * displaySize.height);
+  Offset _toDisplay(double x, double y, Size displaySize, bool pixelCoords) {
+    if (pixelCoords) {
+      double normW, normH;
+      if (y > imageSize.height || x > imageSize.width) {
+        normW = imageSize.height;
+        normH = imageSize.width;
+      } else {
+        normW = imageSize.width;
+        normH = imageSize.height;
+      }
+      final nx = (x / normW).clamp(0.0, 1.0);
+      final ny = (y / normH).clamp(0.0, 1.0);
+      return Offset(nx * displaySize.width, ny * displaySize.height);
     }
-    return Offset(y * displaySize.width, x * displaySize.height);
-  }
-
-  Offset _lmOffset(PoseLandmark? lm, Size displaySize, bool rotate90) {
-    if (lm == null) return Offset.zero;
-    return _map(_normX(lm.x), _normY(lm.y), displaySize, rotate90);
+    return Offset(x * displaySize.width, y * displaySize.height);
   }
 
   void _drawSportBadge(Canvas canvas, Size size) {
