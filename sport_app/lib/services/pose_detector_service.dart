@@ -20,6 +20,35 @@ class PoseDetectorService {
 
   bool get isProcessing => _isProcessing;
 
+  Future<List<pm.PoseLandmark>?> processImageFile(String filePath) async {
+    if (_detector == null) return null;
+
+    _isProcessing = true;
+    try {
+      final inputImage = ml.InputImage.fromFilePath(filePath);
+      final poses = await _detector!.processImage(inputImage);
+      if (poses.isEmpty) return null;
+
+      final landmarks = poses.first.landmarks;
+      final result = landmarks.entries.map((e) {
+        final land = e.value;
+        final typeIndex = _poseLandmarkTypeIndex(land.type);
+        return pm.PoseLandmark(
+          id: typeIndex,
+          name: land.type.name,
+          x: land.x,
+          y: land.y,
+          z: land.z,
+          visibility: land.likelihood,
+        );
+      }).toList();
+
+      return result;
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
   Future<List<pm.PoseLandmark>?> processCameraImage(
     CameraImage image, {
     required int inputImageWidth,

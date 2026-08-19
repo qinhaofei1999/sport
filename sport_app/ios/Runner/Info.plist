@@ -43,6 +43,8 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>SportPose 需要摄像头权限来进行姿态分析</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SportPose 需要相册权限来选择图片进行姿态分析</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

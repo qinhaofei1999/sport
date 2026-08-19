@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'camera_screen.dart';
 import 'result_screen.dart';
+import 'test_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -66,6 +67,15 @@ class HomeScreen extends StatelessWidget {
                     style: TextStyle(color: Colors.white70),
                   ),
                 ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () => _openTest(context),
+                  icon: const Icon(Icons.bug_report, color: Colors.white38),
+                  label: const Text(
+                    '调试测试',
+                    style: TextStyle(color: Colors.white38, fontSize: 12),
+                  ),
+                ),
               ],
             ),
           ),
@@ -87,6 +97,13 @@ class HomeScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ResultScreen()),
+    );
+  }
+
+  void _openTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TestScreen()),
     );
   }
 }
