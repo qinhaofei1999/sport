@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
@@ -12,6 +11,8 @@ class PoseDetectorService {
   ml.PoseDetector? _detector;
   bool _isProcessing = false;
   File? _tempFile;
+
+  static const int _targetWidth = 640;
 
   void initialize({ml.PoseDetectionMode mode = ml.PoseDetectionMode.stream}) {
     _detector = ml.PoseDetector(
@@ -76,13 +77,19 @@ class PoseDetectorService {
       final width = image.width;
       final height = image.height;
 
-      final rgba = Uint8List(width * height * 4);
-      for (var row = 0; row < height; row++) {
-        final rowOffset = row * bytesPerRow;
-        final pixelOffset = row * width * 4;
-        for (var col = 0; col < width; col++) {
-          final srcIdx = rowOffset + col * 4;
-          final dstIdx = pixelOffset + col * 4;
+      final scale = _targetWidth / width;
+      final dstW = _targetWidth;
+      final dstH = (height * scale).round();
+
+      final rgba = Uint8List(dstW * dstH * 4);
+      for (var dstRow = 0; dstRow < dstH; dstRow++) {
+        final srcRow = (dstRow / scale).floor();
+        final srcRowOffset = srcRow * bytesPerRow;
+        final dstPixelOffset = dstRow * dstW * 4;
+        for (var dstCol = 0; dstCol < dstW; dstCol++) {
+          final srcCol = (dstCol / scale).floor();
+          final srcIdx = srcRowOffset + srcCol * 4;
+          final dstIdx = dstPixelOffset + dstCol * 4;
           rgba[dstIdx + 0] = bytes[srcIdx + 2]; // R
           rgba[dstIdx + 1] = bytes[srcIdx + 1]; // G
           rgba[dstIdx + 2] = bytes[srcIdx + 0]; // B
@@ -93,8 +100,8 @@ class PoseDetectorService {
       final completer = Completer<ui.Image>();
       ui.decodeImageFromPixels(
         rgba,
-        width,
-        height,
+        dstW,
+        dstH,
         ui.PixelFormat.rgba8888,
         completer.complete,
       );

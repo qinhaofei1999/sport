@@ -33,6 +33,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   final List<List<pm.PoseLandmark>?> _frameLandmarks = [];
   int _frameCount = 0;
+  int _skipCount = 0;
   List<pm.PoseLandmark>? _currentLandmarks;
   Map<String, double?>? _currentAngles;
   final double _fps = 30;
@@ -95,6 +96,13 @@ class _CameraScreenState extends State<CameraScreen> {
       return;
     }
 
+    _skipCount++;
+    if (_skipCount % 3 != 0) {
+      _frameCount++;
+      _frameLandmarks.add(_currentLandmarks);
+      return;
+    }
+
     final rotation = _getCameraRotation();
 
     _poseService!.processCameraImage(
@@ -108,9 +116,11 @@ class _CameraScreenState extends State<CameraScreen> {
       if (landmarks != null && landmarks.isNotEmpty) {
         final angles = AngleCalculator.calcJointAngles(landmarks);
 
+        const targetWidth = 640;
+        final scale = targetWidth / image.width;
         final effectiveSize = Size(
-          image.width.toDouble(),
-          image.height.toDouble(),
+          targetWidth.toDouble(),
+          (image.height * scale).toDouble(),
         );
 
         if (mounted) {
