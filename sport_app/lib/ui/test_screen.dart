@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
-import '../models/pose_landmark.dart';
+import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart' as ml;
+import '../models/pose_landmark.dart' as pm;
 import '../services/pose_detector_service.dart';
 import '../utils/pose_painter.dart';
 
@@ -15,7 +15,7 @@ class TestScreen extends StatefulWidget {
 
 class _TestScreenState extends State<TestScreen> {
   File? _imageFile;
-  List<PoseLandmark>? _landmarks;
+  List<pm.PoseLandmark>? _landmarks;
   Size? _imageSize;
   bool _isProcessing = false;
   String? _error;
@@ -26,7 +26,7 @@ class _TestScreenState extends State<TestScreen> {
   @override
   void initState() {
     super.initState();
-    _poseService.initialize(mode: PoseDetectionMode.single);
+    _poseService.initialize(mode: ml.PoseDetectionMode.single);
   }
 
   @override
@@ -200,7 +200,7 @@ class _TestScreenState extends State<TestScreen> {
   }
 
   Widget _buildDebugTable() {
-    final sorted = List<PoseLandmark>.from(_landmarks!);
+    final sorted = List<pm.PoseLandmark>.from(_landmarks!);
     sorted.sort((a, b) => a.id.compareTo(b.id));
 
     return Padding(
