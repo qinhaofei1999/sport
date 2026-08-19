@@ -108,11 +108,9 @@ class _CameraScreenState extends State<CameraScreen> {
       if (landmarks != null && landmarks.isNotEmpty) {
         final angles = AngleCalculator.calcJointAngles(landmarks);
 
-        final isRotated = rotation == ml.InputImageRotation.rotation90deg ||
-            rotation == ml.InputImageRotation.rotation270deg;
         final effectiveSize = Size(
-          (isRotated ? image.height : image.width).toDouble(),
-          (isRotated ? image.width : image.height).toDouble(),
+          image.width.toDouble(),
+          image.height.toDouble(),
         );
 
         if (mounted) {

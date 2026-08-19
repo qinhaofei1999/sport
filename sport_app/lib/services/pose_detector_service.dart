@@ -1,12 +1,17 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart' as ml;
+import 'package:path_provider/path_provider.dart';
 import '../models/pose_landmark.dart' as pm;
 
 class PoseDetectorService {
   ml.PoseDetector? _detector;
   bool _isProcessing = false;
+  File? _tempFile;
 
   void initialize({ml.PoseDetectionMode mode = ml.PoseDetectionMode.stream}) {
     _detector = ml.PoseDetector(
@@ -29,21 +34,7 @@ class PoseDetectorService {
       final poses = await _detector!.processImage(inputImage);
       if (poses.isEmpty) return null;
 
-      final landmarks = poses.first.landmarks;
-      final result = landmarks.entries.map((e) {
-        final land = e.value;
-        final typeIndex = _poseLandmarkTypeIndex(land.type);
-        return pm.PoseLandmark(
-          id: typeIndex,
-          name: land.type.name,
-          x: land.x,
-          y: land.y,
-          z: land.z,
-          visibility: land.likelihood,
-        );
-      }).toList();
-
-      return result;
+      return _extractLandmarks(poses);
     } finally {
       _isProcessing = false;
     }
@@ -59,65 +50,86 @@ class PoseDetectorService {
 
     _isProcessing = true;
     try {
-      final inputImage = _buildInputImage(
-        image,
-        width: inputImageWidth,
-        height: inputImageHeight,
-        rotation: rotation,
-      );
-      if (inputImage == null) return null;
+      final filePath = await _saveFrameToTempFile(image);
+      if (filePath == null) return null;
 
-      final poses = await _detector!.processImage(inputImage);
-      if (poses.isEmpty) return null;
+      try {
+        final inputImage = ml.InputImage.fromFilePath(filePath);
+        final poses = await _detector!.processImage(inputImage);
+        if (poses.isEmpty) return null;
 
-      final landmarks = poses.first.landmarks;
-      final result = landmarks.entries.map((e) {
-        final land = e.value;
-        final typeIndex = _poseLandmarkTypeIndex(land.type);
-        return pm.PoseLandmark(
-          id: typeIndex,
-          name: land.type.name,
-          x: land.x,
-          y: land.y,
-          z: land.z,
-          visibility: land.likelihood,
-        );
-      }).toList();
-
-      return result;
+        return _extractLandmarks(poses);
+      } finally {
+        _tempFile?.deleteSync();
+        _tempFile = null;
+      }
     } finally {
       _isProcessing = false;
     }
   }
 
-  ml.InputImage? _buildInputImage(
-    CameraImage image, {
-    required int width,
-    required int height,
-    required ml.InputImageRotation rotation,
-  }) {
-    if (Platform.isAndroid) {
-      return ml.InputImage.fromBytes(
-        bytes: image.planes[0].bytes,
-        metadata: ml.InputImageMetadata(
-          size: ui.Size(width.toDouble(), height.toDouble()),
-          rotation: rotation,
-          format: ml.InputImageFormat.yuv_420_888,
-          bytesPerRow: image.planes[0].bytesPerRow,
-        ),
+  Future<String?> _saveFrameToTempFile(CameraImage image) async {
+    try {
+      final plane = image.planes[0];
+      final bytes = plane.bytes;
+      final bytesPerRow = plane.bytesPerRow;
+      final width = image.width;
+      final height = image.height;
+
+      final rgba = Uint8List(width * height * 4);
+      for (var row = 0; row < height; row++) {
+        final rowOffset = row * bytesPerRow;
+        final pixelOffset = row * width * 4;
+        for (var col = 0; col < width; col++) {
+          final srcIdx = rowOffset + col * 4;
+          final dstIdx = pixelOffset + col * 4;
+          rgba[dstIdx + 0] = bytes[srcIdx + 2]; // R
+          rgba[dstIdx + 1] = bytes[srcIdx + 1]; // G
+          rgba[dstIdx + 2] = bytes[srcIdx + 0]; // B
+          rgba[dstIdx + 3] = bytes[srcIdx + 3]; // A
+        }
+      }
+
+      final completer = Completer<ui.Image>();
+      ui.decodeImageFromPixels(
+        rgba,
+        width,
+        height,
+        ui.PixelFormat.rgba8888,
+        completer.complete,
       );
-    } else if (Platform.isIOS) {
-      return ml.InputImage.fromBytes(
-        bytes: image.planes[0].bytes,
-        metadata: ml.InputImageMetadata(
-          size: ui.Size(width.toDouble(), height.toDouble()),
-          rotation: rotation,
-          format: ml.InputImageFormat.bgra8888,
-          bytesPerRow: image.planes[0].bytesPerRow,
-        ),
-      );
+      final uiImage = await completer.future;
+
+      final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return null;
+
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/sport_frame_${Platform.environment['PROCESS_ID'] ?? '0'}.png');
+      await file.writeAsBytes(byteData.buffer.asUint8List());
+      _tempFile = file;
+
+      uiImage.dispose();
+
+      return file.path;
+    } catch (_) {
+      return null;
     }
-    return null;
+  }
+
+  List<pm.PoseLandmark> _extractLandmarks(List<ml.Pose> poses) {
+    final landmarks = poses.first.landmarks;
+    return landmarks.entries.map((e) {
+      final land = e.value;
+      final typeIndex = _poseLandmarkTypeIndex(land.type);
+      return pm.PoseLandmark(
+        id: typeIndex,
+        name: land.type.name,
+        x: land.x,
+        y: land.y,
+        z: land.z,
+        visibility: land.likelihood,
+      );
+    }).toList();
   }
 
   int _poseLandmarkTypeIndex(ml.PoseLandmarkType type) {
@@ -160,6 +172,8 @@ class PoseDetectorService {
   }
 
   void dispose() {
+    _tempFile?.deleteSync();
+    _tempFile = null;
     _detector?.close();
     _detector = null;
   }
