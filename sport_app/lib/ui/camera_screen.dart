@@ -424,66 +424,22 @@ class _CameraScreenState extends State<CameraScreen> {
     final ankleL = _currentAngles!['ankle_left'];
     final ankleR = _currentAngles!['ankle_right'];
 
-    final lmCount = _currentLandmarks?.length ?? 0;
-    final visCount =
-        _currentLandmarks?.where((l) => l.visibility > 0.1).length ?? 0;
-    final avgVis = lmCount > 0
-        ? (_currentLandmarks!.map((l) => l.visibility).reduce((a, b) => a + b) /
-                lmCount)
-            .toStringAsFixed(2)
-        : '-';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.black54,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _angleRow('左膝', kneeL, Colors.lightGreen),
-              _angleRow('右膝', kneeR, Colors.orange),
-              _angleRow('左踝', ankleL, Colors.lightGreen),
-              _angleRow('右踝', ankleR, Colors.orange),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black54,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(' landmarks: $lmCount  vis>0.1: $visCount  avg: $avgVis',
-                  style: const TextStyle(
-                      color: Colors.white70, fontSize: 10, fontFamily: 'monospace')),
-              Text(
-                  ' camSize: ${_cameraSize?.width.toStringAsFixed(0)}x${_cameraSize?.height.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                      color: Colors.white70, fontSize: 10, fontFamily: 'monospace')),
-              Text(
-                  ' imgSize: ${_effectiveImageSize?.width.toStringAsFixed(0)}x${_effectiveImageSize?.height.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                      color: Colors.white70, fontSize: 10, fontFamily: 'monospace')),
-              Text(
-                  ' frameCount: $_frameCount  record: $_isRecording',
-                  style: const TextStyle(
-                      color: Colors.white70, fontSize: 10, fontFamily: 'monospace')),
-            ],
-          ),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _angleRow('左膝', kneeL, Colors.lightGreen),
+          _angleRow('右膝', kneeR, Colors.orange),
+          _angleRow('左踝', ankleL, Colors.lightGreen),
+          _angleRow('右踝', ankleR, Colors.orange),
+        ],
+      ),
     );
   }
 

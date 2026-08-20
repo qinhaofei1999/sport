@@ -163,27 +163,6 @@ class PosePainter extends CustomPainter {
     if (sportType == 'running') {
       _drawSportBadge(canvas, size);
     }
-
-    final first = landmarks!.firstWhere(
-      (l) => _bodyLandmarkIds.contains(l.id),
-      orElse: () => landmarks!.first,
-    );
-    final npos = _toDisplay(first.x, first.y, size, pixelCoords);
-    final rawStr = '(${first.x.toStringAsFixed(0)},${first.y.toStringAsFixed(0)})';
-    final mapStr = '(${npos.dx.toStringAsFixed(0)},${npos.dy.toStringAsFixed(0)})';
-    final debugPainter = TextPainter(
-      text: TextSpan(
-        text: 'raw:$rawStr map:$mapStr px:$pixelCoords img:${imageSize.width.toStringAsFixed(0)}x${imageSize.height.toStringAsFixed(0)} scr:${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)}',
-        style: const TextStyle(
-          color: Colors.red,
-          fontSize: 10,
-          backgroundColor: Colors.white70,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    debugPainter.layout();
-    debugPainter.paint(canvas, Offset(10, size.height - 30));
   }
 
   Offset _toDisplay(double x, double y, Size displaySize, bool pixelCoords) {
